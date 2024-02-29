@@ -1,0 +1,180 @@
+#include "util.h"
+#include <fstream>
+#include <sstream>
+
+std::string readFile(const std::string &path) {
+  std::ifstream file(path);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
+
+std::string trimString(std::string string) { return trimString(std::move(string), " \n\r\t"); }
+
+std::string trimString(std::string string, const std::string &trimChars) {
+  string.erase(0, string.find_first_not_of(trimChars)); // left
+  string.erase(string.find_last_not_of(trimChars) + 1); // right
+  return string;
+}
+
+std::string trimNumberString(std::string string) {
+  string.erase(string.find_last_not_of('0') + 1); // 移除多余的零
+  if (string.back() == '.') {
+    string.pop_back(); // 移除小数点
+  }
+  return string;
+}
+
+std::string joinString(const std::vector<std::string> &list) { return joinString(list, ","); }
+
+std::string joinString(const std::vector<std::string> &list, const std::string &delimiter) {
+  size_t last = list.size() - 1;
+
+  std::string string;
+
+  for (int i = 0; i <= last; i++) {
+    if (!list[i].empty()) {
+      string += list[i];
+    }
+    if (i != last) {
+      string += delimiter;
+    }
+  }
+
+  return string;
+}
+
+std::optional<std::string> toString(const std::any &value) {
+  if (!value.has_value()) {
+    return "nil";
+  }
+
+  if (isString(value)) {
+    return std::any_cast<std::string>(value);
+  }
+  if (isNumber(value)) {
+    return trimNumberString(std::to_string(std::any_cast<double>(value))); // 去除末尾的'.'或'0'
+  }
+  if (isBool(value)) {
+    return std::any_cast<bool>(value) ? "true" : "false";
+  }
+
+  return std::nullopt;
+}
+
+std::string toString(const std::any &value, const std::string &defaultValue) {
+  auto optString = toString(value);
+
+  if (optString.has_value()) {
+    return optString.value();
+  }
+
+  return defaultValue;
+}
+
+std::optional<double> toNumber(const std::any &value) {
+  if (!value.has_value()) {
+    return 0;
+  }
+
+  if (isString(value)) {
+    auto [status, number] = stringToNumber(std::any_cast<std::string>(value));
+    if (status) {
+      return number;
+    }
+  }
+  if (isNumber(value)) {
+    return std::any_cast<double>(value);
+  }
+  if (isBool(value)) {
+    return std::any_cast<bool>(value) ? 1 : 0;
+  }
+
+  return std::nullopt;
+}
+
+double toNumber(const std::any &value, double defaultValue) {
+  auto optNumber = toNumber(value);
+
+  if (optNumber.has_value()) {
+    return optNumber.value();
+  }
+
+  return defaultValue;
+}
+
+std::optional<bool> toBool(const std::any &value) {
+  if (!value.has_value()) {
+    return false;
+  }
+
+  if (isString(value)) {
+    return !std::any_cast<std::string>(value).empty();
+  }
+  if (isNumber(value)) {
+    return std::any_cast<double>(value) != 0;
+  }
+  if (isBool(value)) {
+    return std::any_cast<bool>(value);
+  }
+
+  return std::nullopt;
+}
+
+bool toBool(const std::any &value, bool defaultValue) {
+  auto optBool = toBool(value);
+
+  if (optBool.has_value()) {
+    return optBool.value();
+  }
+
+  return defaultValue;
+}
+
+bool isString(const std::any &value) {
+  auto &type = value.type();
+
+  if (type == typeid(std::string)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isNumber(const std::any &value) {
+  auto &type = value.type();
+
+  if (type == typeid(double)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isBool(const std::any &value) {
+  auto &type = value.type();
+
+  if (type == typeid(bool)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isEqual(const std::any &a, const std::any &b) {
+  if ((isString(a) || isNumber(a) || isBool(a)) && (isString(b) || isNumber(b) || isBool(b))) {
+    return (toString(a) == toString(b)) || (toNumber(a) == toNumber(b)) || (toBool(a) == toBool(b));
+  }
+  return false;
+}
+
+std::pair<bool, double> stringToNumber(const std::string &value) {
+  try {
+    double number = std::stod(value);
+    return {true, number};
+  } catch (const std::invalid_argument &err) {
+    return {false, 0};
+  } catch (const std::out_of_range &err) {
+    return {false, 0};
+  }
+}
