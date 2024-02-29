@@ -1,0 +1,27 @@
+program             =>  declaration*
+declaration         =>  fun | var | statement
+fun                 =>  "fun" IDENTIFIER "(" parameters? ")" block
+parameters          =>  IDENTIFIER ("," IDENTIFIER)*
+var                 =>  "var" IDENTIFIER ("=" expression)? ";"
+statement           =>  expr | print | block | if | while | for | return
+return              =>  "return" expression? ";"
+for                 =>  "for" "(" (var | expr | ";") expression? ";" expression? ")" statement
+while               =>  "while" "(" expression ")" statement
+if                  =>  "if" "(" expression ")" statement ("else" statement)?
+block               =>  "{" program "}"
+expr                =>  expression ";"
+print               =>  "print" expr
+
+expression          =>  assignment | or
+or                  =>  and ("or" and)*
+and                 =>  equality ("and" equality)*
+assignment          =>  (IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=") assignment) | equality
+equality            =>  comparison (("==" | "!=") comparison)*
+comparison          =>  term ((">" | "<" | ">=" | "<=") term)*
+term                =>  factor (("+" | "-") factor)*
+factor              =>  exp (("*" | "/") exp)*
+exp                 =>  unary (** unary)*
+unary               =>  "!" unary | ("+" | "-")? call | ("++" | "--") primary | primary ("++" | "--")
+call                =>  primary ("(" arguments? ")")*
+arguments           =>  expression ("," expression)*
+primary             =>  IDENTIFIER | NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
