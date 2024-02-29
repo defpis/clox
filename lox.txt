@@ -1,0 +1,30 @@
+program             =>  declaration*
+declaration         =>  class | fun | var | statement
+class               =>  "class" IDENTIFIER ("<" IDENTIFIER)? "{" (attribute | method)* "}"
+attribute           =>  "static"? IDENTIFIER ("=" expression)? ";"
+method              =>  ("static" | "getter" | "setter")? IDENTIFIER "(" parameters? ")" block
+parameters          =>  IDENTIFIER ("," IDENTIFIER)*
+var                 =>  "var" attribute
+fun                 =>  "fun" method
+statement           =>  expr | print | block | if | while | for | return
+return              =>  "return" expression? ";"
+for                 =>  "for" "(" (var | expr | ";") expression? ";" expression? ")" statement
+while               =>  "while" "(" expression ")" statement
+if                  =>  "if" "(" expression ")" statement ("else" statement)?
+block               =>  "{" program "}"
+expr                =>  expression ";"
+print               =>  "print" expr
+
+expression          =>  assignment
+assignment          =>  ((call ".")? IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=") assignment) | or
+or                  =>  and ("or" and)*
+and                 =>  equality ("and" equality)*
+equality            =>  comparison (("==" | "!=") comparison)*
+comparison          =>  term ((">" | "<" | ">=" | "<=") term)*
+term                =>  factor (("+" | "-") factor)*
+factor              =>  exp (("*" | "/") exp)*
+exp                 =>  unary (** unary)*
+unary               =>  ("!" unary) | (("+" | "-" | "++" | "--") call) | call | (call ("++" | "--"))
+call                =>  primary (("(" arguments? ")") | ("." IDENTIFIER))*
+arguments           =>  expression ("," expression)*
+primary             =>  IDENTIFIER | NUMBER | STRING | "true" | "false" | "nil" | ("(" expression ")") | ("super" "." IDENTIFIER)
