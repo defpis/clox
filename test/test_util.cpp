@@ -3,6 +3,10 @@
 #include "util.h"
 #include <gtest/gtest.h>
 
+using namespace util;
+
+namespace test_util {
+
 void testProgram(const std::string &programPath, std::string expectedOutput, bool produceError) {
   std::string path = TEST_ROOT;
   path.append(programPath);
@@ -13,7 +17,7 @@ void testProgram(const std::string &programPath, std::string expectedOutput, boo
     testing::internal::CaptureStdout();
   }
 
-  Lox::runFile(path);
+  lox::runFile(path);
 
   std::string actualOutput;
   if (produceError) {
@@ -27,3 +31,5 @@ void testProgram(const std::string &programPath, std::string expectedOutput, boo
 
   ASSERT_EQ(expectedOutput, actualOutput);
 }
+
+} // namespace test_util

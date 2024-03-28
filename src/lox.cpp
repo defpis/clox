@@ -4,12 +4,11 @@
 #include "util.h"
 #include <iostream>
 
-bool Lox::_hadError = false;
-Scanner Lox::_scanner = Scanner();
-Parser Lox::_parser = Parser();
-Interpreter Lox::_interpreter = Interpreter();
+using namespace util;
 
-void Lox::runCmd(int argc, char **argv) {
+namespace lox {
+
+void runCmd(int argc, char **argv) {
   if (argc > 2) {
     std::cout << "Usage: lox[ script]" << std::endl;
     std::exit(64);
@@ -24,7 +23,7 @@ void Lox::runCmd(int argc, char **argv) {
 
 // 使用 linenoise 需要在 Clion 中开启 `Emulate terminal in the output console`
 
-void Lox::runRepl() {
+void runRepl() {
   // 允许多行显示
   linenoiseSetMultiLine(1);
 
@@ -57,7 +56,7 @@ void Lox::runRepl() {
   }
 }
 
-void Lox::runFile(const std::string &path) {
+void runFile(const std::string &path) {
   std::string source = readFile(path);
   runCode(source);
   if (_hadError) {
@@ -65,25 +64,21 @@ void Lox::runFile(const std::string &path) {
   }
 }
 
-void Lox::runCode(const std::string &code) {
+void runCode(const std::string &code) {
   auto tokens = _scanner.scanTokens(code);
 
-  auto expression = _parser.parse(tokens);
-  if (!expression.has_value()) {
-    return;
+  for (auto &token : tokens) {
+    std::cout << token->toString() << std::endl;
   }
 
-  auto result = _interpreter.interpret(expression.value());
-  if (!result.has_value()) {
-    return;
-  }
+  auto statements = _parser.parse(tokens);
 
-  std::cout << toString(result.value(), "") << std::endl;
+  _interpreter.interpret(statements);
 }
 
-void Lox::error(int line, const std::string &message) { report(line, "", message); }
+void error(int line, const std::string &message) { report(line, "", message); }
 
-void Lox::error(const SPToken &token, const std::string &message) {
+void error(const SPToken &token, const std::string &message) {
   if (token->type == TokenType::EOF_) {
     report(token->line, " at end", message);
   } else {
@@ -91,7 +86,9 @@ void Lox::error(const SPToken &token, const std::string &message) {
   }
 }
 
-void Lox::report(int line, const std::string &where, const std::string &message) {
+void report(int line, const std::string &where, const std::string &message) {
   std::cout << "[line " << line << "] Error" << where << ": " << message << std::endl;
   _hadError = true;
 }
+
+} // namespace lox

@@ -14,7 +14,7 @@ SPToken Parser::advance() {
 }
 
 bool Parser::match(const std::vector<TokenType> &types) {
-  for (auto &type : types) {
+  for (auto &type : types) { // NOLINT(*-use-anyofallof)
     if (check(type)) {
       advance();
       return true;
@@ -43,9 +43,9 @@ SPToken Parser::peekPrev() { return _tokens.at(_current - 1); }
 
 bool Parser::isAtEnd() { return peek()->type == TokenType::EOF_; }
 
-SPExpr Parser::expression() { return equality(); }
+SPExpr Parser::expression() { return equality(); } // NOLINT(*-no-recursion)
 
-SPExpr Parser::equality() {
+SPExpr Parser::equality() { // NOLINT(*-no-recursion)
   SPExpr expr = comparison();
 
   while (match({TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL})) {
@@ -57,7 +57,7 @@ SPExpr Parser::equality() {
   return expr;
 }
 
-SPExpr Parser::comparison() {
+SPExpr Parser::comparison() { // NOLINT(*-no-recursion)
   SPExpr expr = term();
 
   while (match({TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS, TokenType::LESS_EQUAL})) {
@@ -69,7 +69,7 @@ SPExpr Parser::comparison() {
   return expr;
 }
 
-SPExpr Parser::term() {
+SPExpr Parser::term() { // NOLINT(*-no-recursion)
   SPExpr expr = factor();
 
   while (match({TokenType::MINUS, TokenType::PLUS})) {
@@ -81,7 +81,7 @@ SPExpr Parser::term() {
   return expr;
 }
 
-SPExpr Parser::factor() {
+SPExpr Parser::factor() { // NOLINT(*-no-recursion)
   SPExpr expr = unary();
 
   while (match({TokenType::SLASH, TokenType::STAR})) {
@@ -93,7 +93,7 @@ SPExpr Parser::factor() {
   return expr;
 }
 
-SPExpr Parser::unary() {
+SPExpr Parser::unary() { // NOLINT(*-no-recursion)
   if (match({TokenType::BANG, TokenType::MINUS})) {
     SPToken op = peekPrev();
     SPExpr right = unary();
@@ -103,7 +103,7 @@ SPExpr Parser::unary() {
   return primary();
 }
 
-SPExpr Parser::primary() {
+SPExpr Parser::primary() { // NOLINT(*-no-recursion)
   if (match({TokenType::FALSE})) {
     return std::make_shared<LiteralExpr>(false);
   }
@@ -125,7 +125,7 @@ SPExpr Parser::primary() {
 }
 
 ParserError Parser::error(const SPToken &token, const std::string &message) {
-  Lox::error(token, message);
+  lox::error(token, message);
   return ParserError(message);
 }
 
@@ -156,14 +156,36 @@ void Parser::synchronize() {
   }
 }
 
-std::optional<SPExpr> Parser::parse(const std::vector<SPToken> &tokens) {
+SPStmt Parser::statement() {
+  if (match({TokenType::PRINT})) {
+    return printStatement();
+  }
+
+  return expressionStatement();
+}
+
+SPStmt Parser::expressionStatement() {
+  SPExpr expr = expression();
+  consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+  return std::make_shared<ExpressionStmt>(expr);
+}
+
+SPStmt Parser::printStatement() {
+  SPExpr expr = expression();
+  consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+  return std::make_shared<PrintStmt>(expr);
+}
+
+std::vector<SPStmt> Parser::parse(const std::vector<SPToken> &tokens) {
   reset();
 
   _tokens = tokens;
 
-  try {
-    return expression();
-  } catch (ParserError &err) {
-    return std::nullopt;
+  std::vector<SPStmt> statements;
+
+  while (!isAtEnd()) {
+    statements.push_back(statement());
   }
+
+  return statements;
 }

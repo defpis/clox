@@ -7,25 +7,22 @@
 #include "token.h"
 #include <string>
 
-class Lox {
-private:
-  static bool _hadError;
+namespace lox {
 
-  static Scanner _scanner;
-  static Parser _parser;
-  static Interpreter _interpreter;
+static bool _hadError;
 
-public:
-  static void runCmd(int argc, char **argv);
+static Scanner _scanner;
+static Parser _parser;
+static Interpreter _interpreter;
 
-  static void runRepl();
-  static void runFile(const std::string &path);
-  static void runCode(const std::string &code);
+void runCmd(int argc, char **argv);
+void runRepl();
+void runFile(const std::string &path);
+void runCode(const std::string &code);
+void error(int line, const std::string &message);
+void error(const SPToken &token, const std::string &message);
+void report(int line, const std::string &where, const std::string &message);
 
-  static void error(int line, const std::string &message);
-  static void error(const SPToken &token, const std::string &message);
-
-  static void report(int line, const std::string &where, const std::string &message);
-};
+} // namespace lox
 
 #endif // CLOX_LOX_H

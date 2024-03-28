@@ -5,6 +5,8 @@
 #include <optional>
 #include <vector>
 
+namespace util {
+
 std::string readFile(const std::string &path);
 
 std::string trimString(std::string string);
@@ -31,12 +33,20 @@ bool toBool(const std::any &value, bool defaultValue);
 
 bool isString(const std::any &value);
 
+bool isInt(const std::any &value);
+
+bool isDouble(const std::any &value);
+
 bool isNumber(const std::any &value);
 
 bool isBool(const std::any &value);
 
+bool isNull(const std::any &value);
+
 bool isEqual(const std::any &a, const std::any &b);
 
 std::pair<bool, double> stringToNumber(const std::string &value);
+
+} // namespace util
 
 #endif // CLOX_UTIL_H

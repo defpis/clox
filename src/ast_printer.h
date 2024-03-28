@@ -1,5 +1,5 @@
-#ifndef LOX_AST_PRINTER_H
-#define LOX_AST_PRINTER_H
+#ifndef CLOX_AST_PRINTER_H
+#define CLOX_AST_PRINTER_H
 
 #include "expr.h"
 
@@ -16,4 +16,4 @@ public:
   std::string print(const SPExpr &expr);
 };
 
-#endif // LOX_AST_PRINTER_H
+#endif // CLOX_AST_PRINTER_H

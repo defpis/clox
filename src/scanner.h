@@ -29,7 +29,7 @@ private:
   static bool isAlpha(char c);
   static bool isAlphaNumeric(char c);
 
-  void string();
+  void string(char c);
   void number();
   void identifier();
 

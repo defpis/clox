@@ -1,8 +1,11 @@
 #include "interpreter.h"
 #include "lox.h"
 #include "util.h"
+#include <iostream>
 
-std::any Interpreter::evaluate(SPExpr &expr) { return visit(expr); }
+using namespace util;
+
+std::any Interpreter::evaluate(SPExpr &expr) { return visitExpr(expr); }
 
 void Interpreter::checkNumberOperand(SPToken &op, std::any &value) {
   if (isNumber(value)) {
@@ -19,13 +22,13 @@ void Interpreter::checkNumberOperands(SPToken &op, std::any &left, std::any &rig
 }
 
 InterpreterError Interpreter::error(const SPToken &token, const std::string &message) {
-  Lox::error(token, message);
+  lox::error(token, message);
   return InterpreterError(message);
 }
 
 std::any Interpreter::visitBinaryExpr(BinaryExpr &expr) {
-  auto left = evaluate(expr.left);
-  auto right = evaluate(expr.right);
+  std::any left = evaluate(expr.left);
+  std::any right = evaluate(expr.right);
 
   switch (expr.op->type) {
     case TokenType::MINUS: {
@@ -105,10 +108,17 @@ std::any Interpreter::visitUnaryExpr(UnaryExpr &expr) {
 
 std::any Interpreter::visitLiteralExpr(LiteralExpr &expr) { return expr.value; }
 
-std::optional<std::any> Interpreter::interpret(SPExpr &expr) {
-  try {
-    return evaluate(expr);
-  } catch (InterpreterError &err) {
-    return std::nullopt;
+void Interpreter::execute(SPStmt &stmt) { visitStmt(stmt); }
+
+void Interpreter::visitExpressionStmt(ExpressionStmt &stmt) { evaluate(stmt.expression); }
+
+void Interpreter::visitPrintStmt(PrintStmt &stmt) {
+  std::any value = evaluate(stmt.expression);
+  std::cout << toString(value, "") << std::endl;
+}
+
+void Interpreter::interpret(std::vector<SPStmt> statements) {
+  for (auto &statement : statements) {
+    execute(statement);
   }
 }

@@ -1,12 +1,14 @@
 #include "ast_printer.h"
 #include "util.h"
 
+using namespace util;
+
 std::string AstPrinter::parenthesize(const std::string &name, const std::vector<SPExpr> &exprList) {
   std::string string;
   string.append("(").append(name);
   for (auto &expr : exprList) {
     string.append(" ");
-    string.append(visit(expr));
+    string.append(visitExpr(expr));
   }
   string.append(")");
   return string;
@@ -22,4 +24,4 @@ std::string AstPrinter::visitUnaryExpr(UnaryExpr &expr) { return parenthesize(ex
 
 std::string AstPrinter::visitLiteralExpr(LiteralExpr &expr) { return toString(expr.value, ""); }
 
-std::string AstPrinter::print(const SPExpr &expr) { return visit(expr); }
+std::string AstPrinter::print(const SPExpr &expr) { return visitExpr(expr); }

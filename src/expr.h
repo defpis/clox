@@ -1,5 +1,5 @@
-#ifndef LOX_EXPR_H
-#define LOX_EXPR_H
+#ifndef CLOX_EXPR_H
+#define CLOX_EXPR_H
 
 #include "token.h"
 
@@ -47,12 +47,12 @@ public:
 
   ~LiteralExpr() override = default;
 
-  explicit LiteralExpr(const std::any &val);
+  explicit LiteralExpr(std::any value) : value(std::move(value)) {}
 };
 
 template <typename R> class ExprVisitor {
 protected:
-  R visit(const SPExpr &expr) {
+  R visitExpr(const SPExpr &expr) {
     if (auto *p = dynamic_cast<BinaryExpr *>(expr.get())) {
       return visitBinaryExpr(*p);
     }
@@ -74,4 +74,4 @@ protected:
   virtual R visitLiteralExpr(LiteralExpr &expr) = 0;
 };
 
-#endif // LOX_EXPR_H
+#endif // CLOX_EXPR_H

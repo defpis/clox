@@ -1,7 +1,8 @@
-#ifndef LOX_INTERPRETER_H
-#define LOX_INTERPRETER_H
+#ifndef CLOX_INTERPRETER_H
+#define CLOX_INTERPRETER_H
 
 #include "expr.h"
+#include "stmt.h"
 
 class InterpreterError : public std::exception {
 public:
@@ -9,7 +10,7 @@ public:
   explicit InterpreterError(std::string message) : message(std::move(message)) {}
 };
 
-class Interpreter : public ExprVisitor<std::any> {
+class Interpreter : public ExprVisitor<std::any>, StmtVisitor<void> {
 private:
   std::any evaluate(SPExpr &expr);
 
@@ -23,8 +24,13 @@ private:
   std::any visitUnaryExpr(UnaryExpr &expr) override;
   std::any visitLiteralExpr(LiteralExpr &expr) override;
 
+  void execute(SPStmt &stmt);
+
+  void visitExpressionStmt(ExpressionStmt &stmt) override;
+  void visitPrintStmt(PrintStmt &stmt) override;
+
 public:
-  std::optional<std::any> interpret(SPExpr &expr);
+  void interpret(std::vector<SPStmt> statements);
 };
 
-#endif // LOX_INTERPRETER_H
+#endif // CLOX_INTERPRETER_H

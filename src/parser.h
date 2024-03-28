@@ -1,7 +1,8 @@
-#ifndef LOX_PARSER_H
-#define LOX_PARSER_H
+#ifndef CLOX_PARSER_H
+#define CLOX_PARSER_H
 
 #include "expr.h"
+#include "stmt.h"
 #include <vector>
 
 class ParserError : public std::exception {
@@ -38,8 +39,12 @@ private:
 
   void synchronize();
 
+  SPStmt statement();
+  SPStmt expressionStatement();
+  SPStmt printStatement();
+
 public:
-  std::optional<SPExpr> parse(const std::vector<SPToken> &tokens);
+  std::vector<SPStmt> parse(const std::vector<SPToken> &tokens);
 };
 
-#endif // LOX_PARSER_H
+#endif // CLOX_PARSER_H

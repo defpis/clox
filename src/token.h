@@ -1,5 +1,5 @@
-#ifndef LOX_TOKEN_H
-#define LOX_TOKEN_H
+#ifndef CLOX_TOKEN_H
+#define CLOX_TOKEN_H
 
 #include <any>
 #include <map>
@@ -68,10 +68,10 @@ public:
   Token(Type type, std::string lexeme, std::any literal, int line)
       : type(type), lexeme(std::move(lexeme)), literal(std::move(literal)), line(line) {}
 
-  std::string getString();
+  std::string toString();
 };
 
 using TokenType = Token::Type;
 using SPToken = std::shared_ptr<Token>;
 
-#endif // LOX_TOKEN_H
+#endif // CLOX_TOKEN_H

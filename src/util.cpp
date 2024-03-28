@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace util {
+
 std::string readFile(const std::string &path) {
   std::ifstream file(path);
   std::stringstream buffer;
@@ -45,14 +47,17 @@ std::string joinString(const std::vector<std::string> &list, const std::string &
 }
 
 std::optional<std::string> toString(const std::any &value) {
-  if (!value.has_value()) {
+  if (!value.has_value() || isNull(value)) {
     return "nil";
   }
 
   if (isString(value)) {
     return std::any_cast<std::string>(value);
   }
-  if (isNumber(value)) {
+  if (isInt(value)) {
+    return std::to_string(std::any_cast<int>(value));
+  }
+  if (isDouble(value)) {
     return trimNumberString(std::to_string(std::any_cast<double>(value))); // 去除末尾的'.'或'0'
   }
   if (isBool(value)) {
@@ -73,7 +78,7 @@ std::string toString(const std::any &value, const std::string &defaultValue) {
 }
 
 std::optional<double> toNumber(const std::any &value) {
-  if (!value.has_value()) {
+  if (!value.has_value() || isNull(value)) {
     return 0;
   }
 
@@ -83,7 +88,10 @@ std::optional<double> toNumber(const std::any &value) {
       return number;
     }
   }
-  if (isNumber(value)) {
+  if (isInt(value)) {
+    return std::any_cast<int>(value);
+  }
+  if (isDouble(value)) {
     return std::any_cast<double>(value);
   }
   if (isBool(value)) {
@@ -104,14 +112,17 @@ double toNumber(const std::any &value, double defaultValue) {
 }
 
 std::optional<bool> toBool(const std::any &value) {
-  if (!value.has_value()) {
+  if (!value.has_value() || isNull(value)) {
     return false;
   }
 
   if (isString(value)) {
     return !std::any_cast<std::string>(value).empty();
   }
-  if (isNumber(value)) {
+  if (isInt(value)) {
+    return std::any_cast<int>(value) != 0;
+  }
+  if (isDouble(value)) {
     return std::any_cast<double>(value) != 0;
   }
   if (isBool(value)) {
@@ -141,10 +152,28 @@ bool isString(const std::any &value) {
   return false;
 }
 
-bool isNumber(const std::any &value) {
+bool isInt(const std::any &value) {
+  auto &type = value.type();
+
+  if (type == typeid(int)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isDouble(const std::any &value) {
   auto &type = value.type();
 
   if (type == typeid(double)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isNumber(const std::any &value) {
+  if (isInt(value) || isDouble(value)) {
     return true;
   }
 
@@ -155,6 +184,16 @@ bool isBool(const std::any &value) {
   auto &type = value.type();
 
   if (type == typeid(bool)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isNull(const std::any &value) {
+  auto &type = value.type();
+
+  if (type == typeid(nullptr)) {
     return true;
   }
 
@@ -178,3 +217,5 @@ std::pair<bool, double> stringToNumber(const std::string &value) {
     return {false, 0};
   }
 }
+
+} // namespace util

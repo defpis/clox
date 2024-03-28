@@ -64,8 +64,8 @@ bool Scanner::isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c 
 
 bool Scanner::isAlphaNumeric(char c) { return isAlpha(c) || isDigit(c); }
 
-void Scanner::string() {
-  while (peek() != '"' && !isAtEnd()) {
+void Scanner::string(char c) {
+  while ((peek() != c) && !isAtEnd()) {
     if (peek() == '\n') {
       _line++;
     }
@@ -73,11 +73,11 @@ void Scanner::string() {
   }
 
   if (isAtEnd()) {
-    Lox::error(_line, "Unterminated string.");
+    lox::error(_line, "Unterminated string.");
     return;
   }
 
-  advance(); // 跳过闭合的双引号
+  advance(); // 跳过闭合的引号
 
   std::string literal = _code.substr(_start + 1, (_current - 1) - (_start + 1));
   addToken(TokenType::STRING, literal);
@@ -153,7 +153,7 @@ void Scanner::scanToken() {
       break;
     }
     case ';': {
-      addToken(TokenType::COMMA);
+      addToken(TokenType::SEMICOLON);
       break;
     }
     case '*': {
@@ -192,7 +192,7 @@ void Scanner::scanToken() {
         }
 
         if (isAtEnd()) {
-          Lox::error(_line, "Unclosed block comment.");
+          lox::error(_line, "Unclosed block comment.");
           return;
         }
 
@@ -210,8 +210,12 @@ void Scanner::scanToken() {
       _line++;
       break;
     }
+    case '\'': {
+      string('\'');
+      break;
+    }
     case '"': {
-      string();
+      string('"');
       break;
     }
     default: {
@@ -220,7 +224,7 @@ void Scanner::scanToken() {
       } else if (isAlpha(c)) {
         identifier();
       } else {
-        Lox::error(_line, "Unexpected character.");
+        lox::error(_line, "Unexpected character.");
       }
     }
   }

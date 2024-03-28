@@ -59,8 +59,10 @@ std::optional<std::string> Token::typeString(TokenType type) {
   return std::nullopt;
 }
 
-std::string Token::getString() {
+std::string Token::toString() {
   auto opt = typeString(type);
   auto typeStr = opt.has_value() ? opt.value() : "UNKNOWN";
-  return "Token<" + joinString({typeStr, lexeme, toString(literal, "object"), toString(line, "")}, " | ") + ">";
+  return "Token<" +
+         util::joinString({typeStr, lexeme, util::toString(literal, "object"), util::toString(line, "-1")}, " | ") +
+         ">";
 }
