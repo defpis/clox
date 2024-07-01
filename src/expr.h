@@ -95,6 +95,28 @@ public:
       : callee(std::move(callee)), paren(std::move(paren)), arguments(std::move(arguments)) {}
 };
 
+class GetExpr : public Expr {
+public:
+  SPExpr object;
+  SPToken name;
+
+  ~GetExpr() override = default;
+
+  GetExpr(SPExpr object, SPToken name) : object(std::move(object)), name(std::move(name)) {}
+};
+
+class SetExpr : public Expr {
+public:
+  SPExpr object;
+  SPToken name;
+  SPExpr value;
+
+  ~SetExpr() override = default;
+
+  SetExpr(SPExpr object, SPToken name, SPExpr value)
+      : object(std::move(object)), name(std::move(name)), value(std::move(value)) {}
+};
+
 template <typename R> class ExprVisitor {
 protected:
   R visitExpr(SPExpr expr) {
@@ -122,6 +144,12 @@ protected:
     if (auto p = std::dynamic_pointer_cast<CallExpr>(expr)) {
       return visitCallExpr(p);
     }
+    if (auto p = std::dynamic_pointer_cast<GetExpr>(expr)) {
+      return visitGetExpr(p);
+    }
+    if (auto p = std::dynamic_pointer_cast<SetExpr>(expr)) {
+      return visitSetExpr(p);
+    }
     // Never reach here!
     throw std::runtime_error("Unexpected expression type.");
   }
@@ -134,6 +162,8 @@ protected:
   virtual R visitAssignExpr(std::shared_ptr<AssignExpr> expr) = 0;
   virtual R visitLogicalExpr(std::shared_ptr<LogicalExpr> expr) = 0;
   virtual R visitCallExpr(std::shared_ptr<CallExpr> expr) = 0;
+  virtual R visitGetExpr(std::shared_ptr<GetExpr> expr) = 0;
+  virtual R visitSetExpr(std::shared_ptr<SetExpr> expr) = 0;
 };
 
 #endif // CLOX_EXPR_H

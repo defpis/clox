@@ -87,6 +87,8 @@ SPExpr Parser::assignment() { // NOLINT(*-no-recursion)
       }
 
       return std::make_shared<AssignExpr>(p->name, value, false);
+    } else if (auto p = std::dynamic_pointer_cast<GetExpr>(expr)) {
+      return std::make_shared<SetExpr>(p->object, p->name, value);
     }
 
     throw error(op, "Invalid assignment target.");
@@ -180,7 +182,7 @@ SPExpr Parser::unary() { // NOLINT(*-no-recursion)
   // --a|++a => a=a-1|a=a+1
   if (match({TokenType::MINUS_MINUS, TokenType::PLUS_PLUS})) {
     SPToken op = peekPrev();
-    SPExpr expr = primary();
+    SPExpr expr = call();
     if (auto p = std::dynamic_pointer_cast<VariableExpr>(expr)) {
       return selfOperatingUnaryToAssign(op, p, false);
     }
@@ -189,7 +191,7 @@ SPExpr Parser::unary() { // NOLINT(*-no-recursion)
 
   // a--|a++ => a=a-1|a=a+1
   if (checkNext(TokenType::MINUS_MINUS) || checkNext(TokenType::PLUS_PLUS)) {
-    SPExpr expr = primary();
+    SPExpr expr = call();
     advance();
     SPToken op = peekPrev();
     if (auto p = std::dynamic_pointer_cast<VariableExpr>(expr)) {
@@ -212,6 +214,17 @@ SPExpr Parser::call() { // NOLINT(*-no-recursion)
 
   while (match({TokenType::LEFT_PAREN})) {
     expr = finishCall(expr);
+  }
+
+  while (true) {
+    if (match({TokenType::LEFT_PAREN})) {
+      expr = finishCall(expr);
+    } else if (match({TokenType::DOT})) {
+      SPToken name = consume(TokenType::IDENTIFIER, "Expect property name after '.'.");
+      expr = std::make_shared<GetExpr>(expr, name);
+    } else {
+      break;
+    }
   }
 
   return expr;
@@ -334,7 +347,7 @@ SPStmt Parser::statement() { // NOLINT(*-no-recursion)
     return blockStatement();
   }
 
-  return expressionStatement();
+  return exprStatement();
 }
 
 SPStmt Parser::returnStatement() {
@@ -349,8 +362,11 @@ SPStmt Parser::returnStatement() {
 
 SPStmt Parser::declaration() { // NOLINT(*-no-recursion)
   try {
+    if (match({TokenType::CLASS})) {
+      return classDeclaration();
+    }
     if (match({TokenType::FUN})) {
-      return function("function");
+      return funDeclaration("function");
     }
     if (match({TokenType::VAR})) {
       return varDeclaration();
@@ -362,7 +378,7 @@ SPStmt Parser::declaration() { // NOLINT(*-no-recursion)
   }
 }
 
-SPStmt Parser::function(const std::string &kind) { // NOLINT(*-no-recursion)
+std::shared_ptr<FunStmt> Parser::funDeclaration(const std::string &kind) { // NOLINT(*-no-recursion)
   SPToken name = consume(TokenType::IDENTIFIER, "Expect " + kind + " name.");
   consume(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
   std::vector<SPToken> parameters;
@@ -378,7 +394,21 @@ SPStmt Parser::function(const std::string &kind) { // NOLINT(*-no-recursion)
 
   consume(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
   std::shared_ptr<BlockStmt> body = blockStatement();
-  return std::make_shared<FunctionStmt>(name, parameters, body);
+  return std::make_shared<FunStmt>(name, parameters, body);
+}
+
+SPStmt Parser::classDeclaration() {
+  SPToken name = consume(TokenType::IDENTIFIER, "Expect class name.");
+  consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
+
+  std::vector<std::shared_ptr<FunStmt>> methods;
+  while (!check(TokenType::RIGHT_BRACE) && !isAtEnd()) {
+    methods.push_back(funDeclaration("method"));
+  }
+
+  consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
+
+  return std::make_shared<ClassStmt>(name, methods);
 }
 
 SPStmt Parser::varDeclaration() {
@@ -393,10 +423,10 @@ SPStmt Parser::varDeclaration() {
   return std::make_shared<VarStmt>(name, initializer);
 }
 
-SPStmt Parser::expressionStatement() {
+SPStmt Parser::exprStatement() {
   SPExpr expr = expression();
   consume(TokenType::SEMICOLON, "Expect ';' after expression.");
-  return std::make_shared<ExpressionStmt>(expr);
+  return std::make_shared<ExprStmt>(expr);
 }
 
 SPStmt Parser::printStatement() {
@@ -448,7 +478,7 @@ SPStmt Parser::forStatement() { // NOLINT(*-no-recursion)
   } else if (match({TokenType::VAR})) {
     initializer = varDeclaration(); // for (var a = 0; ...; ...)
   } else {
-    initializer = expressionStatement(); // for (expression; ...; ...)
+    initializer = exprStatement(); // for (expression; ...; ...)
   }
 
   SPExpr condition;
@@ -466,7 +496,7 @@ SPStmt Parser::forStatement() { // NOLINT(*-no-recursion)
   SPStmt body = statement();
 
   if (increment) {
-    body = std::make_shared<BlockStmt>(std::vector<SPStmt>{body, std::make_shared<ExpressionStmt>(increment)});
+    body = std::make_shared<BlockStmt>(std::vector<SPStmt>{body, std::make_shared<ExprStmt>(increment)});
   }
 
   if (!condition) {

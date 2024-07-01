@@ -11,13 +11,13 @@ public:
 
 using SPStmt = std::shared_ptr<Stmt>;
 
-class ExpressionStmt : public Stmt {
+class ExprStmt : public Stmt {
 public:
   SPExpr expression;
 
-  ~ExpressionStmt() override = default;
+  ~ExprStmt() override = default;
 
-  explicit ExpressionStmt(SPExpr expression) : expression(std::move(expression)) {}
+  explicit ExprStmt(SPExpr expression) : expression(std::move(expression)) {}
 };
 
 class ReturnStmt : public Stmt {
@@ -58,16 +58,27 @@ public:
   explicit BlockStmt(std::vector<SPStmt> statements) : statements(std::move(statements)) {}
 };
 
-class FunctionStmt : public Stmt {
+class FunStmt : public Stmt {
 public:
   SPToken name;
   std::vector<SPToken> params;
   std::shared_ptr<BlockStmt> body;
 
-  ~FunctionStmt() override = default;
+  ~FunStmt() override = default;
 
-  explicit FunctionStmt(SPToken name, std::vector<SPToken> params, std::shared_ptr<BlockStmt> body)
+  explicit FunStmt(SPToken name, std::vector<SPToken> params, std::shared_ptr<BlockStmt> body)
       : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
+};
+
+class ClassStmt : public Stmt {
+public:
+  SPToken name;
+  std::vector<std::shared_ptr<FunStmt>> methods;
+
+  ~ClassStmt() override = default;
+
+  explicit ClassStmt(SPToken name, std::vector<std::shared_ptr<FunStmt>> methods)
+      : name(std::move(name)), methods(std::move(methods)) {}
 };
 
 class IfStmt : public Stmt {
@@ -95,8 +106,8 @@ public:
 template <typename R> class StmtVisitor {
 protected:
   R visitStmt(SPStmt stmt) {
-    if (auto p = std::dynamic_pointer_cast<ExpressionStmt>(stmt)) {
-      return visitExpressionStmt(p);
+    if (auto p = std::dynamic_pointer_cast<ExprStmt>(stmt)) {
+      return visitExprStmt(p);
     }
     if (auto p = std::dynamic_pointer_cast<ReturnStmt>(stmt)) {
       return visitReturnStmt(p);
@@ -104,8 +115,11 @@ protected:
     if (auto p = std::dynamic_pointer_cast<PrintStmt>(stmt)) {
       return visitPrintStmt(p);
     }
-    if (auto p = std::dynamic_pointer_cast<FunctionStmt>(stmt)) {
-      return visitFunctionStmt(p);
+    if (auto p = std::dynamic_pointer_cast<FunStmt>(stmt)) {
+      return visitFunStmt(p);
+    }
+    if (auto p = std::dynamic_pointer_cast<ClassStmt>(stmt)) {
+      return visitClassStmt(p);
     }
     if (auto p = std::dynamic_pointer_cast<VarStmt>(stmt)) {
       return visitVarStmt(p);
@@ -123,10 +137,11 @@ protected:
     throw std::runtime_error("Unexpected statement type.");
   }
 
-  virtual R visitExpressionStmt(std::shared_ptr<ExpressionStmt> stmt) = 0;
+  virtual R visitExprStmt(std::shared_ptr<ExprStmt> stmt) = 0;
   virtual R visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) = 0;
   virtual R visitPrintStmt(std::shared_ptr<PrintStmt> stmt) = 0;
-  virtual R visitFunctionStmt(std::shared_ptr<FunctionStmt> stmt) = 0;
+  virtual R visitFunStmt(std::shared_ptr<FunStmt> stmt) = 0;
+  virtual R visitClassStmt(std::shared_ptr<ClassStmt> stmt) = 0;
   virtual R visitVarStmt(std::shared_ptr<VarStmt> stmt) = 0;
   virtual R visitBlockStmt(std::shared_ptr<BlockStmt> stmt) = 0;
   virtual R visitIfStmt(std::shared_ptr<IfStmt> stmt) = 0;

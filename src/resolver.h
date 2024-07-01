@@ -35,11 +35,14 @@ private:
   void visitAssignExpr(std::shared_ptr<AssignExpr> expr) override;
   void visitLogicalExpr(std::shared_ptr<LogicalExpr> expr) override;
   void visitCallExpr(std::shared_ptr<CallExpr> expr) override;
+  void visitGetExpr(std::shared_ptr<GetExpr> expr) override;
+  void visitSetExpr(std::shared_ptr<SetExpr> expr) override;
 
-  void visitExpressionStmt(std::shared_ptr<ExpressionStmt> stmt) override;
+  void visitExprStmt(std::shared_ptr<ExprStmt> stmt) override;
   void visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) override;
   void visitPrintStmt(std::shared_ptr<PrintStmt> stmt) override;
-  void visitFunctionStmt(std::shared_ptr<FunctionStmt> stmt) override;
+  void visitFunStmt(std::shared_ptr<FunStmt> stmt) override;
+  void visitClassStmt(std::shared_ptr<ClassStmt> stmt) override;
   void visitVarStmt(std::shared_ptr<VarStmt> stmt) override;
   void visitBlockStmt(std::shared_ptr<BlockStmt> stmt) override;
   void visitIfStmt(std::shared_ptr<IfStmt> stmt) override;
@@ -52,7 +55,7 @@ private:
   void resolve(SPExpr expr);
 
   void resolveLocal(SPExpr expr, SPToken name);
-  void resolveFunction(std::shared_ptr<FunctionStmt> function, FunctionType type);
+  void resolveFunction(std::shared_ptr<FunStmt> function, FunctionType type);
 
   std::deque<Scope> scopes;
   static ScopeData *findInScope(Scope &scope, SPToken name);

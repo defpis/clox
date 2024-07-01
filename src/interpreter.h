@@ -31,13 +31,16 @@ private:
   std::any visitAssignExpr(std::shared_ptr<AssignExpr> expr) override;
   std::any visitLogicalExpr(std::shared_ptr<LogicalExpr> expr) override;
   std::any visitCallExpr(std::shared_ptr<CallExpr> expr) override;
+  std::any visitGetExpr(std::shared_ptr<GetExpr> expr) override;
+  std::any visitSetExpr(std::shared_ptr<SetExpr> expr) override;
 
   void execute(SPStmt stmt);
 
-  void visitExpressionStmt(std::shared_ptr<ExpressionStmt> stmt) override;
+  void visitExprStmt(std::shared_ptr<ExprStmt> stmt) override;
   void visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) override;
   void visitPrintStmt(std::shared_ptr<PrintStmt> stmt) override;
-  void visitFunctionStmt(std::shared_ptr<FunctionStmt> stmt) override;
+  void visitFunStmt(std::shared_ptr<FunStmt> stmt) override;
+  void visitClassStmt(std::shared_ptr<ClassStmt> stmt) override;
   void visitVarStmt(std::shared_ptr<VarStmt> stmt) override;
   void visitBlockStmt(std::shared_ptr<BlockStmt> stmt) override;
   void visitIfStmt(std::shared_ptr<IfStmt> stmt) override;

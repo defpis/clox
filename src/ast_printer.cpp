@@ -34,4 +34,8 @@ std::string AstPrinter::visitLogicalExpr(std::shared_ptr<LogicalExpr> expr) { re
 
 std::string AstPrinter::visitCallExpr(std::shared_ptr<CallExpr> expr) { return ""; }
 
+std::string AstPrinter::visitGetExpr(std::shared_ptr<GetExpr> expr) { return ""; }
+
+std::string AstPrinter::visitSetExpr(std::shared_ptr<SetExpr> expr) { return ""; }
+
 std::string AstPrinter::print(SPExpr expr) { return visitExpr(std::move(expr)); }

@@ -125,8 +125,9 @@ std::any Interpreter::visitVariableExpr(std::shared_ptr<VariableExpr> expr) {
   if (it != locals.end()) {
     return environment->getAt(it->second, expr->name);
   } else {
-    // return globals->get(expr->name);
-    throw error(expr->name, "This variable could not be found.");
+    // 需要获取系统内置函数
+    return globals->get(expr->name);
+    // throw error(expr->name, "This variable could not be found.");
   }
 }
 
@@ -188,6 +189,28 @@ std::any Interpreter::visitCallExpr(std::shared_ptr<CallExpr> expr) {
   return callable->call(this, arguments);
 }
 
+std::any Interpreter::visitGetExpr(std::shared_ptr<GetExpr> expr) {
+  std::any object = evaluate(expr->object);
+
+  if (object.type() == typeid(SPInstance)) {
+    return std::any_cast<SPInstance>(object)->get(expr->name);
+  }
+
+  throw error(expr->name, "Only instances have properties.");
+}
+
+std::any Interpreter::visitSetExpr(std::shared_ptr<SetExpr> expr) {
+  std::any object = evaluate(expr->object);
+
+  if (object.type() == typeid(SPInstance)) {
+    std::any value = evaluate(expr->value);
+    std::any_cast<SPInstance>(object)->set(expr->name, value);
+    return value;
+  }
+
+  throw error(expr->name, "Only instances have properties.");
+}
+
 void Interpreter::execute(SPStmt stmt) { visitStmt(std::move(stmt)); }
 
 void Interpreter::executeBlock(std::shared_ptr<BlockStmt> blockStmt, SPEnvironment _environment) {
@@ -208,7 +231,7 @@ void Interpreter::executeBlock(std::shared_ptr<BlockStmt> blockStmt, SPEnvironme
   finally();
 }
 
-void Interpreter::visitExpressionStmt(std::shared_ptr<ExpressionStmt> stmt) { evaluate(stmt->expression); }
+void Interpreter::visitExprStmt(std::shared_ptr<ExprStmt> stmt) { evaluate(stmt->expression); }
 
 void Interpreter::visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) {
   std::any value;
@@ -222,12 +245,28 @@ void Interpreter::visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) {
 
 void Interpreter::visitPrintStmt(std::shared_ptr<PrintStmt> stmt) {
   std::any value = evaluate(stmt->expression);
+
+  if (value.type() == typeid(SPCallable)) {
+    std::cout << std::any_cast<SPCallable>(value)->toString() << std::endl;
+    return;
+  }
+
+  if (value.type() == typeid(SPInstance)) {
+    std::cout << std::any_cast<SPInstance>(value)->toString() << std::endl;
+    return;
+  }
+
   std::cout << toString(value, "") << std::endl;
 }
 
-void Interpreter::visitFunctionStmt(std::shared_ptr<FunctionStmt> stmt) {
+void Interpreter::visitFunStmt(std::shared_ptr<FunStmt> stmt) {
   auto function = static_cast<SPCallable>(std::make_shared<Function>(stmt, environment));
   environment->define(stmt->name->lexeme, function);
+}
+
+void Interpreter::visitClassStmt(std::shared_ptr<ClassStmt> stmt) {
+  auto klass = static_cast<SPCallable>(std::make_shared<Class>(stmt->name));
+  environment->define(stmt->name->lexeme, klass);
 }
 
 void Interpreter::visitVarStmt(std::shared_ptr<VarStmt> stmt) {

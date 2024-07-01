@@ -48,10 +48,11 @@ private:
   SPStmt statement();
 
   SPStmt declaration();
-  SPStmt function(const std::string &kind);
+  std::shared_ptr<FunStmt> funDeclaration(const std::string &kind);
+  SPStmt classDeclaration();
   SPStmt varDeclaration();
 
-  SPStmt expressionStatement();
+  SPStmt exprStatement();
   SPStmt returnStatement();
   SPStmt printStatement();
   std::shared_ptr<BlockStmt> blockStatement();

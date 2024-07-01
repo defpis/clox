@@ -45,6 +45,13 @@ void Resolver::visitCallExpr(std::shared_ptr<CallExpr> expr) {
   }
 }
 
+void Resolver::visitGetExpr(std::shared_ptr<GetExpr> expr) { resolve(expr->object); }
+
+void Resolver::visitSetExpr(std::shared_ptr<SetExpr> expr) {
+  resolve(expr->object);
+  resolve(expr->value);
+}
+
 void Resolver::visitVarStmt(std::shared_ptr<VarStmt> stmt) {
   declare(stmt->name);
   if (stmt->initializer) {
@@ -61,14 +68,19 @@ void Resolver::visitBlockStmt(std::shared_ptr<BlockStmt> stmt) {
   endScope();
 }
 
-void Resolver::visitFunctionStmt(std::shared_ptr<FunctionStmt> stmt) {
+void Resolver::visitFunStmt(std::shared_ptr<FunStmt> stmt) {
   declare(stmt->name);
   define(stmt->name);
 
   resolveFunction(stmt, FunctionType::FUNCTION);
 }
 
-void Resolver::visitExpressionStmt(std::shared_ptr<ExpressionStmt> stmt) { resolve(stmt->expression); }
+void Resolver::visitClassStmt(std::shared_ptr<ClassStmt> stmt) {
+  declare(stmt->name);
+  define(stmt->name);
+}
+
+void Resolver::visitExprStmt(std::shared_ptr<ExprStmt> stmt) { resolve(stmt->expression); }
 
 void Resolver::visitIfStmt(std::shared_ptr<IfStmt> stmt) {
   resolve(stmt->condition);
@@ -126,7 +138,7 @@ void Resolver::resolveLocal(SPExpr expr, SPToken name) {
   }
 }
 
-void Resolver::resolveFunction(std::shared_ptr<FunctionStmt> function, FunctionType type) {
+void Resolver::resolveFunction(std::shared_ptr<FunStmt> function, FunctionType type) {
   FunctionType enclosingFunction = currentFunction;
   currentFunction = type;
 

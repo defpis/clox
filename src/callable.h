@@ -4,7 +4,12 @@
 #include "environment.h"
 #include "interpreter.h"
 
-class Callable {
+class Object {
+public:
+  virtual std::string toString() = 0;
+};
+
+class Callable : public Object {
 public:
   virtual ~Callable() = default;
 
@@ -20,11 +25,12 @@ public:
 
   std::size_t arity() override;
   std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) override;
+  std::string toString() override;
 
-  std::shared_ptr<FunctionStmt> declaration;
+  std::shared_ptr<FunStmt> declaration;
   SPEnvironment closure;
 
-  explicit Function(std::shared_ptr<FunctionStmt> declaration, SPEnvironment closure)
+  explicit Function(std::shared_ptr<FunStmt> declaration, SPEnvironment closure)
       : declaration(std::move(declaration)), closure(std::move(closure)) {}
 };
 
@@ -34,6 +40,7 @@ public:
 
   std::size_t arity() override;
   std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) override;
+  std::string toString() override;
 };
 
 class Count : public Callable {
@@ -45,6 +52,34 @@ public:
 
   std::size_t arity() override;
   std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) override;
+  std::string toString() override;
 };
+
+class Class : public Callable, public std::enable_shared_from_this<Class> {
+public:
+  ~Class() override = default;
+
+  SPToken name;
+  explicit Class(SPToken name) : name(std::move(name)) {}
+
+  std::size_t arity() override;
+  std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) override;
+  std::string toString() override;
+};
+
+class Instance : public Object {
+private:
+  std::map<std::string, std::any> fields;
+
+public:
+  std::shared_ptr<Class> klass;
+  explicit Instance(std::shared_ptr<Class> klass) : klass(std::move(klass)) {}
+  std::string toString() override;
+
+  std::any get(SPToken name);
+  std::any set(SPToken name, std::any value);
+};
+
+using SPInstance = std::shared_ptr<Instance>;
 
 #endif // CLOX_CALLABLE_H

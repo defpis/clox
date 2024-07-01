@@ -1,1 +1,20 @@
 /**/
+
+print clock;
+print count;
+
+class Breakfast {
+  cook() {
+    print "Eggs a-fryin'!";
+  }
+
+  serve(who) {
+    print "Enjoy your breakfast, " + who + ".";
+  }
+}
+
+print Breakfast;
+var a = Breakfast();
+print a;
+a.a = 1;
+print a.a;
