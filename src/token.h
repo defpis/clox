@@ -7,7 +7,7 @@
 
 class Token {
 public:
-  enum Type {
+  enum class Type {
     MINUS_MINUS, // --
     PLUS_PLUS,   // ++
     MINUS_EQUAL, // -=

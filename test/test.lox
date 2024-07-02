@@ -1,20 +1,17 @@
 /**/
 
-print clock;
-print count;
+class A {
+    b = 1;
+    a = this.fib(10);
 
-class Breakfast {
-  cook() {
-    print "Eggs a-fryin'!";
-  }
+    fib(n) {
+      print this.b;
+      if (n <= 1) return n;
+      return this.fib(n-1) + this.fib(n-2);
+    }
 
-  serve(who) {
-    print "Enjoy your breakfast, " + who + ".";
-  }
 }
 
-print Breakfast;
-var a = Breakfast();
-print a;
-a.a = 1;
-print a.a;
+
+print A().fib(10);
+print A().a;

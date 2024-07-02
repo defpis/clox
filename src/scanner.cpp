@@ -260,7 +260,7 @@ std::vector<SPToken> Scanner::scanTokens(const std::string &_code) {
     scanToken();
   }
 
-  tokens.push_back(std::make_shared<Token>(Token::EOF_, "", nullptr, line));
+  tokens.push_back(std::make_shared<Token>(TokenType::EOF_, "", nullptr, line));
 
   return tokens;
 }

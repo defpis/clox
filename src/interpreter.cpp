@@ -127,7 +127,7 @@ std::any Interpreter::visitVariableExpr(std::shared_ptr<VariableExpr> expr) {
   } else {
     // 需要获取系统内置函数
     return globals->get(expr->name);
-    // throw error(expr->name, "This variable could not be found.");
+    // throw error(expr->name, "This variable can't be found.");
   }
 }
 
@@ -142,7 +142,7 @@ std::any Interpreter::visitAssignExpr(std::shared_ptr<AssignExpr> expr) {
   } else {
     // original = globals->get(expr->name);
     // globals->assign(expr->name, value);
-    throw error(expr->name, "This variable could not be found.");
+    throw error(expr->name, "This variable can't be found.");
   }
 
   return expr->returnOriginal ? std::move(original) : std::move(value);
@@ -204,11 +204,20 @@ std::any Interpreter::visitSetExpr(std::shared_ptr<SetExpr> expr) {
 
   if (object.type() == typeid(SPInstance)) {
     std::any value = evaluate(expr->value);
-    std::any_cast<SPInstance>(object)->set(expr->name, value);
+    std::any_cast<SPInstance>(object)->assign(expr->name, value);
     return value;
   }
 
   throw error(expr->name, "Only instances have properties.");
+}
+
+std::any Interpreter::visitThisExpr(std::shared_ptr<ThisExpr> expr) {
+  auto it = locals.find(expr);
+  if (it != locals.end()) {
+    return environment->getAt(it->second, expr->keyword);
+  } else {
+    throw error(expr->keyword, "Can't find 'this' binding.");
+  }
 }
 
 void Interpreter::execute(SPStmt stmt) { visitStmt(std::move(stmt)); }
@@ -265,7 +274,16 @@ void Interpreter::visitFunStmt(std::shared_ptr<FunStmt> stmt) {
 }
 
 void Interpreter::visitClassStmt(std::shared_ptr<ClassStmt> stmt) {
-  auto klass = static_cast<SPCallable>(std::make_shared<Class>(stmt->name));
+  SPEnvironment closure = std::make_shared<Environment>(environment);
+
+  std::map<std::string, SPFunction> methods;
+  for (auto &method : stmt->methods) {
+    auto function = std::make_shared<Function>(method, closure);
+    methods[method->name->lexeme] = function;
+  }
+
+  auto klass = static_cast<SPCallable>(std::make_shared<Class>(stmt->name, methods, stmt->attributes, closure));
+
   environment->define(stmt->name->lexeme, klass);
 }
 

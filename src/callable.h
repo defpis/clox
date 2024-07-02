@@ -4,6 +4,14 @@
 #include "environment.h"
 #include "interpreter.h"
 
+class Callable;
+class Function;
+class Instance;
+
+using SPCallable = std::shared_ptr<Callable>;
+using SPFunction = std::shared_ptr<Function>;
+using SPInstance = std::shared_ptr<Instance>;
+
 class Object {
 public:
   virtual std::string toString() = 0;
@@ -16,8 +24,6 @@ public:
   virtual std::size_t arity() = 0;
   virtual std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) = 0;
 };
-
-using SPCallable = std::shared_ptr<Callable>;
 
 class Function : public Callable {
 public:
@@ -32,6 +38,8 @@ public:
 
   explicit Function(std::shared_ptr<FunStmt> declaration, SPEnvironment closure)
       : declaration(std::move(declaration)), closure(std::move(closure)) {}
+
+  SPFunction bind(SPInstance instance);
 };
 
 class Clock : public Callable {
@@ -60,14 +68,24 @@ public:
   ~Class() override = default;
 
   SPToken name;
-  explicit Class(SPToken name) : name(std::move(name)) {}
+
+  std::map<std::string, SPFunction> methods;
+  SPFunction findMethod(std::string name);
+
+  std::vector<std::shared_ptr<VarStmt>> attributes;
+  SPEnvironment closure;
+
+  Class(SPToken name, std::map<std::string, SPFunction> methods, std::vector<std::shared_ptr<VarStmt>> attributes,
+        SPEnvironment closure)
+      : name(std::move(name)), methods(std::move(methods)), attributes(std::move(attributes)),
+        closure(std::move(closure)) {}
 
   std::size_t arity() override;
   std::any call(Interpreter *interpreter, std::vector<std::any> &arguments) override;
   std::string toString() override;
 };
 
-class Instance : public Object {
+class Instance : public Object, public std::enable_shared_from_this<Instance> {
 private:
   std::map<std::string, std::any> fields;
 
@@ -78,8 +96,7 @@ public:
 
   std::any get(SPToken name);
   std::any set(SPToken name, std::any value);
+  std::any assign(SPToken name, std::any value);
 };
-
-using SPInstance = std::shared_ptr<Instance>;
 
 #endif // CLOX_CALLABLE_H

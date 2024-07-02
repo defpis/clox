@@ -73,12 +73,14 @@ public:
 class ClassStmt : public Stmt {
 public:
   SPToken name;
+  std::vector<std::shared_ptr<VarStmt>> attributes;
   std::vector<std::shared_ptr<FunStmt>> methods;
 
   ~ClassStmt() override = default;
 
-  explicit ClassStmt(SPToken name, std::vector<std::shared_ptr<FunStmt>> methods)
-      : name(std::move(name)), methods(std::move(methods)) {}
+  explicit ClassStmt(SPToken name, std::vector<std::shared_ptr<VarStmt>> attributes,
+                     std::vector<std::shared_ptr<FunStmt>> methods)
+      : name(std::move(name)), attributes(std::move(attributes)), methods(std::move(methods)) {}
 };
 
 class IfStmt : public Stmt {
@@ -133,7 +135,6 @@ protected:
     if (auto p = std::dynamic_pointer_cast<WhileStmt>(stmt)) {
       return visitWhileStmt(p);
     }
-    // Never reach here!
     throw std::runtime_error("Unexpected statement type.");
   }
 

@@ -38,4 +38,6 @@ std::string AstPrinter::visitGetExpr(std::shared_ptr<GetExpr> expr) { return "";
 
 std::string AstPrinter::visitSetExpr(std::shared_ptr<SetExpr> expr) { return ""; }
 
+std::string AstPrinter::visitThisExpr(std::shared_ptr<ThisExpr> expr) { return ""; }
+
 std::string AstPrinter::print(SPExpr expr) { return visitExpr(std::move(expr)); }

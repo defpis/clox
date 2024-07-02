@@ -17,6 +17,7 @@ private:
   std::string visitCallExpr(std::shared_ptr<CallExpr> expr) override;
   std::string visitGetExpr(std::shared_ptr<GetExpr> expr) override;
   std::string visitSetExpr(std::shared_ptr<SetExpr> expr) override;
+  std::string visitThisExpr(std::shared_ptr<ThisExpr> expr) override;
 
 public:
   std::string print(SPExpr expr);

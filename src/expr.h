@@ -117,6 +117,15 @@ public:
       : object(std::move(object)), name(std::move(name)), value(std::move(value)) {}
 };
 
+class ThisExpr : public Expr {
+public:
+  SPToken keyword;
+
+  ~ThisExpr() override = default;
+
+  ThisExpr(SPToken keyword) : keyword(std::move(keyword)) {}
+};
+
 template <typename R> class ExprVisitor {
 protected:
   R visitExpr(SPExpr expr) {
@@ -150,7 +159,9 @@ protected:
     if (auto p = std::dynamic_pointer_cast<SetExpr>(expr)) {
       return visitSetExpr(p);
     }
-    // Never reach here!
+    if (auto p = std::dynamic_pointer_cast<ThisExpr>(expr)) {
+      return visitThisExpr(p);
+    }
     throw std::runtime_error("Unexpected expression type.");
   }
 
@@ -164,6 +175,7 @@ protected:
   virtual R visitCallExpr(std::shared_ptr<CallExpr> expr) = 0;
   virtual R visitGetExpr(std::shared_ptr<GetExpr> expr) = 0;
   virtual R visitSetExpr(std::shared_ptr<SetExpr> expr) = 0;
+  virtual R visitThisExpr(std::shared_ptr<ThisExpr> expr) = 0;
 };
 
 #endif // CLOX_EXPR_H

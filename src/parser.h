@@ -10,7 +10,7 @@ class ParseError : public std::exception {};
 class Parser {
 private:
   std::vector<SPToken> tokens;
-  int current;
+  int current = 0;
 
   void reset();
 
@@ -33,8 +33,8 @@ private:
   SPExpr factor();
   SPExpr exp();
 
-  std::shared_ptr<AssignExpr> selfOperatingUnaryToAssign(SPToken op, std::shared_ptr<VariableExpr> var,
-                                                         bool returnOriginal);
+  static std::shared_ptr<AssignExpr> selfOperatingUnaryToAssign(SPToken op, std::shared_ptr<VariableExpr> var,
+                                                                bool returnOriginal);
 
   SPExpr unary();
   SPExpr call();
@@ -50,7 +50,7 @@ private:
   SPStmt declaration();
   std::shared_ptr<FunStmt> funDeclaration(const std::string &kind);
   SPStmt classDeclaration();
-  SPStmt varDeclaration();
+  std::shared_ptr<VarStmt> varDeclaration();
 
   SPStmt exprStatement();
   SPStmt returnStatement();
@@ -67,6 +67,7 @@ public:
   Parser(const Parser &) = delete;
   Parser &operator=(const Parser &) = delete;
 
+  static bool tryParse;
   static ParseError error(SPToken token, const std::string &message);
   std::vector<SPStmt> parse(std::vector<SPToken> &_tokens);
 };

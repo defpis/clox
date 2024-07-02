@@ -12,9 +12,9 @@ private:
   std::string code;
   std::vector<SPToken> tokens;
 
-  int start;
-  int current;
-  int line;
+  int start = 0;
+  int current = 0;
+  int line = 0;
 
   void reset();
 

@@ -8,7 +8,8 @@
 #include <deque>
 #include <map>
 
-enum FunctionType { NONE, FUNCTION, CLASS };
+enum class FunctionType { NONE, FUNCTION, METHOD, CLASS };
+enum class ClassType { NONE, CLASS };
 
 struct ScopeData {
   SPToken name;
@@ -16,13 +17,17 @@ struct ScopeData {
   bool used;
 };
 
-class Scope : public std::map<std::string, ScopeData> {};
+struct Scope {
+  std::map<std::string, ScopeData> data;
+  bool checkUnused;
+};
 
 class ResolverError : public std::exception {};
 
 class Resolver : public ExprVisitor<void>, StmtVisitor<void> {
 private:
   FunctionType currentFunction = FunctionType::NONE;
+  ClassType currentClass = ClassType::NONE;
 
   std::map<SPExpr, int> locals;
   void reset();
@@ -37,6 +42,7 @@ private:
   void visitCallExpr(std::shared_ptr<CallExpr> expr) override;
   void visitGetExpr(std::shared_ptr<GetExpr> expr) override;
   void visitSetExpr(std::shared_ptr<SetExpr> expr) override;
+  void visitThisExpr(std::shared_ptr<ThisExpr> expr) override;
 
   void visitExprStmt(std::shared_ptr<ExprStmt> stmt) override;
   void visitReturnStmt(std::shared_ptr<ReturnStmt> stmt) override;
@@ -49,6 +55,7 @@ private:
   void visitWhileStmt(std::shared_ptr<WhileStmt> stmt) override;
 
   void beginScope();
+  void beginScope(bool checkUnused);
   void endScope();
 
   void resolve(SPStmt stmt);

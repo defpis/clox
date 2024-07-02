@@ -1,9 +1,11 @@
 program             =>  declaration*
 declaration         =>  class | fun | var | statement
-class               =>  "class" IDENTIFIER "{" fun* "}"
-fun                 =>  "fun" IDENTIFIER "(" parameters? ")" block
+class               =>  "class" IDENTIFIER "{" (attribute | method)* "}"
+fun                 =>  "fun" method
+attribute           =>  IDENTIFIER ("=" expression)? ";"
+method              =>  IDENTIFIER "(" parameters? ")" block
 parameters          =>  IDENTIFIER ("," IDENTIFIER)*
-var                 =>  "var" IDENTIFIER ("=" expression)? ";"
+var                 =>  "var" attribute
 statement           =>  expr | print | block | if | while | for | return
 return              =>  "return" expression? ";"
 for                 =>  "for" "(" (var | expr | ";") expression? ";" expression? ")" statement

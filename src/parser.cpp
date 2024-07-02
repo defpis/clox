@@ -248,6 +248,9 @@ SPExpr Parser::finishCall(SPExpr callee) { // NOLINT(*-no-recursion)
 }
 
 SPExpr Parser::primary() { // NOLINT(*-no-recursion)
+  if (match({TokenType::THIS})) {
+    return std::make_shared<ThisExpr>(peekPrev());
+  }
   if (match({TokenType::FALSE})) {
     return std::make_shared<LiteralExpr>(false);
   }
@@ -397,21 +400,35 @@ std::shared_ptr<FunStmt> Parser::funDeclaration(const std::string &kind) { // NO
   return std::make_shared<FunStmt>(name, parameters, body);
 }
 
-SPStmt Parser::classDeclaration() {
+SPStmt Parser::classDeclaration() { // NOLINT(*-no-recursion)
   SPToken name = consume(TokenType::IDENTIFIER, "Expect class name.");
   consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
 
+  std::vector<std::shared_ptr<VarStmt>> attributes;
   std::vector<std::shared_ptr<FunStmt>> methods;
+
   while (!check(TokenType::RIGHT_BRACE) && !isAtEnd()) {
-    methods.push_back(funDeclaration("method"));
+    tryParse = true;
+    auto start = current;
+
+    try {
+      auto attribute = varDeclaration();
+      attributes.push_back(attribute);
+    } catch (ParseError &err) {
+      tryParse = false;
+      current = start; // 重新设置索引已解析
+
+      auto method = funDeclaration("method");
+      methods.push_back(method);
+    }
   }
 
   consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
 
-  return std::make_shared<ClassStmt>(name, methods);
+  return std::make_shared<ClassStmt>(name, attributes, methods);
 }
 
-SPStmt Parser::varDeclaration() {
+std::shared_ptr<VarStmt> Parser::varDeclaration() {
   SPToken name = consume(TokenType::IDENTIFIER, "Expect variable name.");
 
   SPExpr initializer;
@@ -512,8 +529,12 @@ SPStmt Parser::forStatement() { // NOLINT(*-no-recursion)
   return body;
 }
 
+bool Parser::tryParse = false;
+
 ParseError Parser::error(SPToken token, const std::string &message) {
-  lox::error(std::move(token), message);
+  if (!tryParse) {
+    lox::error(std::move(token), message);
+  }
   return {};
 }
 

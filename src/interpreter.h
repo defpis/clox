@@ -18,8 +18,6 @@ private:
   std::map<SPExpr, int> locals;
   void reset();
 
-  std::any evaluate(SPExpr expr);
-
   static void checkNumberOperand(SPToken op, std::any &value);
   static void checkNumberOperands(SPToken op, std::any &left, std::any &right);
 
@@ -33,6 +31,7 @@ private:
   std::any visitCallExpr(std::shared_ptr<CallExpr> expr) override;
   std::any visitGetExpr(std::shared_ptr<GetExpr> expr) override;
   std::any visitSetExpr(std::shared_ptr<SetExpr> expr) override;
+  std::any visitThisExpr(std::shared_ptr<ThisExpr> expr) override;
 
   void execute(SPStmt stmt);
 
@@ -56,6 +55,7 @@ public:
   SPEnvironment globals = std::make_shared<Environment>();
   SPEnvironment environment = globals;
 
+  std::any evaluate(SPExpr expr);
   void executeBlock(std::shared_ptr<BlockStmt> blockStmt, SPEnvironment _environment);
 
   static InterpretError error(SPToken token, const std::string &message);

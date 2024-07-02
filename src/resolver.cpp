@@ -52,6 +52,14 @@ void Resolver::visitSetExpr(std::shared_ptr<SetExpr> expr) {
   resolve(expr->value);
 }
 
+void Resolver::visitThisExpr(std::shared_ptr<ThisExpr> expr) {
+  if (currentClass == ClassType::NONE) {
+    throw error(expr->keyword, "Can't use 'this' outside of a class.");
+  }
+
+  resolveLocal(expr, expr->keyword);
+}
+
 void Resolver::visitVarStmt(std::shared_ptr<VarStmt> stmt) {
   declare(stmt->name);
   if (stmt->initializer) {
@@ -76,8 +84,46 @@ void Resolver::visitFunStmt(std::shared_ptr<FunStmt> stmt) {
 }
 
 void Resolver::visitClassStmt(std::shared_ptr<ClassStmt> stmt) {
+  ClassType enclosingClass = currentClass;
+  currentClass = ClassType::CLASS;
+
   declare(stmt->name);
+
+  beginScope(false);
+
+  auto &scope = scopes.back();
+  scope.data.emplace("this", ScopeData{
+                                 stmt->name,
+                                 true,
+                                 true,
+                             });
+
+  for (auto &attribute : stmt->attributes) {
+    declare(attribute->name);
+    if (attribute->initializer) {
+      resolve(attribute->initializer);
+    }
+    define(attribute->name);
+  }
+
+  for (auto &method : stmt->methods) {
+    /*
+    // method 不需要执行绑定，否者 resolve 以下代码会认为正确，但是在 interpret 时出错
+    class A {
+      fib(n) {
+        if (n <= 1) return n;
+        return fib(n-1) + fib(n-2);
+      }
+    }
+    */
+    resolveFunction(method, FunctionType::METHOD);
+  }
+
+  endScope();
+
   define(stmt->name);
+
+  currentClass = enclosingClass;
 }
 
 void Resolver::visitExprStmt(std::shared_ptr<ExprStmt> stmt) { resolve(stmt->expression); }
@@ -107,14 +153,17 @@ void Resolver::visitWhileStmt(std::shared_ptr<WhileStmt> stmt) {
   resolve(stmt->body);
 }
 
-void Resolver::beginScope() { scopes.emplace_back(); }
+void Resolver::beginScope() { scopes.emplace_back(Scope{{}, true}); }
+void Resolver::beginScope(bool checkUnused) { scopes.emplace_back(Scope{{}, checkUnused}); }
 
 void Resolver::endScope() {
   auto &scope = scopes.back();
 
-  for (auto &[key, value] : scope) {
-    if (!value.used) {
-      warn(value.name, "Variable unused.");
+  if (scope.checkUnused) {
+    for (auto &[key, value] : scope.data) {
+      if (!value.used) {
+        warn(value.name, "Variable unused.");
+      }
     }
   }
 
@@ -147,7 +196,6 @@ void Resolver::resolveFunction(std::shared_ptr<FunStmt> function, FunctionType t
     declare(param);
     define(param);
   }
-  // resolve(function->body);
   for (auto &statement : function->body->statements) {
     resolve(statement);
   }
@@ -157,8 +205,8 @@ void Resolver::resolveFunction(std::shared_ptr<FunStmt> function, FunctionType t
 }
 
 ScopeData *Resolver::findInScope(Scope &scope, SPToken name) {
-  auto it = scope.find(name->lexeme);
-  if (it != scope.end()) {
+  auto it = scope.data.find(name->lexeme);
+  if (it != scope.data.end()) {
     return &it->second;
   } else {
     return nullptr;
@@ -174,13 +222,13 @@ void Resolver::declare(SPToken name) {
   auto found = findInScope(scope, name);
 
   if (!found) { // 未声明
-    scope.emplace(name->lexeme, ScopeData{
-                                    name,
-                                    false,
-                                    false,
-                                }); // 声明
+    scope.data.emplace(name->lexeme, ScopeData{
+                                         name,
+                                         false,
+                                         false,
+                                     }); // 声明
   } else {
-    throw error(name, "Already a variable with this name in this scope.");
+    throw error(name, "Already declared a variable with this name in this scope.");
   }
 }
 
